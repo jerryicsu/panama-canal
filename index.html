@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>巴拿馬運河：連結兩大洋的世紀工程</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/night.css" />
+  <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
+  <style>
+    :root {
+      --accent:  #e8643a;
+      --accent2: #4fc3f7;
+      --success: #81c784;
+      --warn:    #ffb74d;
+    }
+    .reveal { font-family: 'Segoe UI', 'Noto Sans TC', sans-serif; }
+    .reveal h1, .reveal h2, .reveal h3 {
+      font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .reveal h1 { font-size: 2.2em; }
+    .reveal h2 { font-size: 1.5em; color: var(--accent2); }
+    .reveal .progress { color: var(--accent); }
+    .reveal .fragment { opacity: 0.2; }
+    .reveal .fragment.visible { opacity: 1; }
+
+    /* 封面 */
+    .title-slide { text-align: center; }
+    .title-slide .tag {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.55em;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.8em;
+      font-weight: 600;
+    }
+    .title-slide .subtitle { font-size: 0.75em; color: #aaa; margin-top: 0.5em; }
+    .title-slide .author   { margin-top: 2em; font-size: 0.5em; color: #888; }
+
+    /* 統計卡 */
+    .stat-row { display: flex; gap: 16px; justify-content: center; margin-top: 0.8em; flex-wrap: wrap; }
+    .stat-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 18px 22px;
+      text-align: center;
+      flex: 1; min-width: 120px;
+    }
+    .stat-card .num   { font-size: 1.6em; font-weight: 800; color: var(--accent); line-height: 1; }
+    .stat-card .label { font-size: 0.38em; color: #ccc; margin-top: 6px; }
+
+    /* 優勢卡 */
+    .adv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 0.5em; }
+    .adv-card {
+      background: rgba(255,255,255,0.05);
+      border-top: 4px solid var(--accent2);
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+    .adv-card .adv-icon img {
+      width: 52px; height: 52px; object-fit: contain;
+      display: block; margin: 0 auto 8px;
+      filter: drop-shadow(0 0 10px rgba(79,195,247,0.6));
+    }
+    .adv-card .adv-title { font-size: 0.46em; font-weight: 700; color: var(--accent2); margin-bottom: 4px; }
+    .adv-card .adv-desc  { font-size: 0.37em; color: #bbb; line-height: 1.6; }
+
+    /* 時間軸 */
+    .timeline { position: relative; padding-left: 36px; margin-top: 0.6em; }
+    .timeline::before {
+      content: ''; position: absolute; left: 14px; top: 4px; bottom: 4px;
+      width: 2px; background: rgba(255,255,255,0.2);
+    }
+    .timeline-item { position: relative; margin-bottom: 14px; font-size: 0.43em; }
+    .timeline-item::before {
+      content: ''; position: absolute; left: -28px; top: 4px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent); border: 2px solid #1a1a2e;
+    }
+    .timeline-item .ti-date { color: var(--accent); font-weight: 700; font-size: 1.1em; margin-bottom: 2px; }
+    .timeline-item .ti-text { color: #ccc; line-height: 1.5; }
+
+    /* 封底 */
+    .end-slide { text-align: center; }
+    .end-slide .tagline { font-size: 0.6em; color: #aaa; margin-top: 0.5em; }
+
+    /* VIZ 滑桿 */
+    .viz-wrap {
+      position: relative;
+      height: 370px;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 0.6em;
+      border: 1px solid rgba(255,255,255,0.1);
+      user-select: none;
+    }
+    .viz-before, .viz-after {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+    }
+    .viz-after { clip-path: inset(0 100% 0 0); }
+    #viz-divider {
+      position: absolute; top:0; left:0;
+      width: 3px; height: 100%;
+      background: linear-gradient(to bottom, transparent, #4fc3f7, transparent);
+      box-shadow: 0 0 14px #4fc3f7;
+      pointer-events: none;
+    }
+    #viz-slider {
+      width: 100%; margin-top: 10px;
+      -webkit-appearance: none;
+      height: 5px; border-radius: 4px;
+      background: linear-gradient(to right, var(--accent2) 0%, rgba(255,255,255,0.15) 0%);
+      outline: none; cursor: pointer;
+    }
+    #viz-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent2); cursor: pointer;
+      box-shadow: 0 0 10px rgba(79,195,247,0.8);
+    }
+
+    /* 投票 */
+    .poll-btn {
+      width: 100%; padding: 11px 16px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px; color: #fff;
+      font-size: 0.46em; cursor: pointer;
+      font-family: inherit; text-align: left;
+      transition: background 0.2s;
+    }
+    .poll-btn:hover { background: rgba(79,195,247,0.12); border-color: rgba(79,195,247,0.3); }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <!-- ① 封面 -->
+    <section data-background-image="images/cover.png"
+             data-background-opacity="0.35"
+             data-background-size="cover">
+      <div class="title-slide">
+        <div class="tag">全球航運 · 世紀工程</div>
+        <h1>巴拿馬運河</h1>
+        <h2 style="color:var(--accent); margin-top:0.2em;">連結兩大洋的百年奇蹟</h2>
+        <p class="subtitle">現代功能 · 擴建工程 · 全球影響</p>
+        <p class="author">2026 年 · 地理與全球化課程</p>
+      </div>
+    </section>
+
+    <!-- ② 破冰文字雲 -->
+    <section id="slide-wordcloud">
+      <h2 style="font-size:1.05em; margin-bottom:0.3em;">你對巴拿馬運河的第一印象是什麼？</h2>
+      <div style="display:grid; grid-template-columns:240px 1fr; gap:12px; height:450px;">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:rgba(255,255,255,0.06); border-radius:10px; padding:12px;">
+            <div style="font-size:0.36em; color:var(--accent2); font-weight:700; margin-bottom:6px;">輸入關鍵詞</div>
+            <input id="wc-input" type="text" placeholder="輸入後按 Enter…" maxlength="20"
+              style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(79,195,247,0.3);
+                     background:rgba(255,255,255,0.08); color:#fff; font-size:13px;
+                     box-sizing:border-box; font-family:inherit; outline:none;" />
+            <button id="wc-btn"
+              style="width:100%; margin-top:7px; padding:8px; background:var(--accent2); color:#0d1117;
+                     border:none; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer;">
+              送出 ↵
+            </button>
+          </div>
+          <div style="background:rgba(255,255,255,0.06); border-radius:10px; padding:12px; flex:1; overflow:hidden; display:flex; flex-direction:column;">
+            <div style="font-size:0.36em; color:var(--accent2); font-weight:700; margin-bottom:7px;">
+              熱門答案
+              <span style="background:#ff4757; color:#fff; padding:2px 7px;
+                           border-radius:10px; font-size:0.85em; animation:pulse 1.5s infinite;">LIVE</span>
+            </div>
+            <div id="wc-list" style="font-size:0.33em; overflow-y:auto; flex:1; color:#ccc;"></div>
+            <div style="margin-top:7px; font-size:0.3em; color:#555; border-top:1px solid rgba(255,255,255,0.08); padding-top:5px;">
+              總提交：<span id="wc-total" style="color:var(--accent);font-weight:700;">0</span>
+              種類：<span id="wc-unique" style="color:var(--accent2);font-weight:700;">0</span>
+            </div>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04); border-radius:12px; overflow:hidden;
+                    position:relative; border:1px solid rgba(255,255,255,0.07);">
+          <canvas id="wc-canvas" style="width:100%; height:100%; display:block;"></canvas>
+          <div id="wc-empty" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+                                     color:#444; font-size:0.4em; text-align:center; pointer-events:none; line-height:2.2;">
+            輸入第一個關鍵詞<br>文字雲就會出現 ✨
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ 歷史脈絡 -->
+    <section data-background-image="images/history.png"
+             data-background-opacity="0.16"
+             data-background-size="cover">
+      <h2>歷史脈絡</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="ti-date">1881–1889</div>
+          <div class="ti-text">法國工程師雷賽布主導開鑿，因瘧疾、黃熱病與土石流奪去逾 2 萬人命，計畫宣告失敗</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-date">1903</div>
+          <div class="ti-text">巴拿馬自哥倫比亞獨立，美國取得永久控制權，由老羅斯福政府全面接手建設</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-date">1914</div>
+          <div class="ti-text">歷時 10 年、耗資 3.75 億美元（相當於今日約 130 億美元），運河正式通航</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-date">1977</div>
+          <div class="ti-text">美巴簽署《托里約斯-卡特條約》，美國承諾逐步移交運河主權</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-date">1999</div>
+          <div class="ti-text">巴拿馬完全接管運河，成立「巴拿馬運河管理局」獨立運營，每年盈利超 40 億美元</div>
+        </div>
+        <div class="timeline-item">
+          <div class="ti-date">2016</div>
+          <div class="ti-text">耗資 52.5 億美元的擴建工程完工，新巴拿馬型船閘啟用，通行能力倍增</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ④ 運作原理 -->
+    <section>
+      <h2>運作原理：三級船閘系統</h2>
+      <p style="font-size:0.42em; color:#aaa; margin:0.1em 0 0.5em;">海平面 → 加通湖（海拔 26 公尺）→ 海平面，全程 80 公里</p>
+      <div class="adv-grid">
+        <div class="adv-card fragment">
+          <div class="adv-icon"><img src="images/icon_lock.png" alt="船閘"></div>
+          <div class="adv-title">三級複式船閘</div>
+          <div class="adv-desc">大西洋端（加通船閘）與太平洋端（米拉弗洛雷斯船閘）各設三級，逐步抬升/下降船隻 26 公尺</div>
+        </div>
+        <div class="adv-card fragment">
+          <div class="adv-icon"><img src="images/icon_water.png" alt="水位"></div>
+          <div class="adv-title">淡水重力驅動</div>
+          <div class="adv-desc">完全依賴加通湖雨水；每次過閘消耗約 2 億公升；新閘採節水側盆地，回收 60% 用水</div>
+        </div>
+        <div class="adv-card fragment">
+          <div class="adv-icon"><img src="images/icon_ship.png" alt="貨輪"></div>
+          <div class="adv-title">精密引航員制度</div>
+          <div class="adv-desc">所有過境船隻強制由運河局引航員操控，以電力牽引機（Mule）拖引定位，確保安全通行</div>
+        </div>
+        <div class="adv-card fragment">
+          <div class="adv-icon"><img src="images/icon_time.png" alt="時間"></div>
+          <div class="adv-title">過境時間 8–10 小時</div>
+          <div class="adv-desc">實際過閘約 8–10 小時；含排隊等候共約 24–48 小時；可付費優先通行（最高拍賣價逾 300 萬美元）</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑤ 航線革命 VIZ SLIDER -->
+    <section id="slide-viz">
+      <h2 style="margin-bottom:0.2em;">航線革命：拖動滑桿，比較開通前後</h2>
+
+      <div class="viz-wrap" id="viz-wrap">
+        <!-- BEFORE：合恩角路線 -->
+        <div class="viz-before" style="background:linear-gradient(135deg,#1c0d00 0%,#2e1605 100%);">
+          <div style="width:100%;">
+            <div style="font-size:0.48em; color:var(--warn); font-weight:800; letter-spacing:0.08em; margin-bottom:12px;">⚠ 運河開通前 — 繞行合恩角</div>
+            <div style="display:grid; grid-template-columns:150px 1fr; gap:14px; align-items:center;">
+              <!-- SVG 路線示意 -->
+              <svg viewBox="0 0 160 260" style="width:150px;height:230px;display:block;">
+                <rect x="8" y="8" width="50" height="36" rx="5" fill="#2d3a1e" opacity="0.9"/>
+                <text x="33" y="31" fill="#81c784" font-size="8" text-anchor="middle" font-family="sans-serif">美國</text>
+                <rect x="15" y="85" width="56" height="100" rx="7" fill="#2d3a1e" opacity="0.8"/>
+                <text x="43" y="135" fill="#81c784" font-size="8" text-anchor="middle" font-family="sans-serif">南美洲</text>
+                <polygon points="40,182 52,196 28,196" fill="#e8643a" opacity="0.95"/>
+                <text x="43" y="210" fill="#e8643a" font-size="7" text-anchor="middle" font-family="sans-serif">合恩角</text>
+                <rect x="108" y="8" width="44" height="36" rx="5" fill="#1a2a3d" opacity="0.9"/>
+                <text x="130" y="31" fill="#4fc3f7" font-size="8" text-anchor="middle" font-family="sans-serif">亞洲</text>
+                <path d="M 33 44 Q 33 70 33 85 Q 33 130 40 160 Q 43 178 40 196 Q 18 230 130 230 Q 148 230 130 44"
+                      fill="none" stroke="#ffb74d" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.9"/>
+                <circle cx="33" cy="44" r="4" fill="#81c784"/>
+                <circle cx="130" cy="44" r="4" fill="#4fc3f7"/>
+                <text x="80" y="250" fill="#ffb74d" font-size="7" text-anchor="middle" font-family="sans-serif">▲ 繞行路線</text>
+              </svg>
+              <div style="display:flex;flex-direction:column;gap:9px;">
+                <div style="background:rgba(232,100,58,0.15);border:1px solid rgba(232,100,58,0.4);border-radius:9px;padding:10px;">
+                  <div style="font-size:0.36em;color:#ffb74d;font-weight:700;">航行距離</div>
+                  <div style="font-size:0.62em;font-weight:800;color:var(--warn);">≈ 20,000 km</div>
+                  <div style="font-size:0.3em;color:#aaa;">紐約 → 舊金山（繞合恩角）</div>
+                </div>
+                <div style="background:rgba(232,100,58,0.15);border:1px solid rgba(232,100,58,0.4);border-radius:9px;padding:10px;">
+                  <div style="font-size:0.36em;color:#ffb74d;font-weight:700;">航行時間（美東→亞洲）</div>
+                  <div style="font-size:0.62em;font-weight:800;color:var(--warn);">約 43 天</div>
+                </div>
+                <div style="background:rgba(232,100,58,0.15);border:1px solid rgba(232,100,58,0.4);border-radius:9px;padding:10px;">
+                  <div style="font-size:0.36em;color:#ffb74d;font-weight:700;">主要風險</div>
+                  <div style="font-size:0.32em;color:#ccc;line-height:1.7;">⚡ 合恩角狂風暴浪<br>🌊 德雷克海峽巨浪<br>🧊 南極附近浮冰</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AFTER：運河路線 -->
+        <div class="viz-after" id="viz-after" style="background:linear-gradient(135deg,#001828 0%,#003a5c 100%);">
+          <div style="width:100%;">
+            <div style="font-size:0.48em; color:var(--accent2); font-weight:800; letter-spacing:0.08em; margin-bottom:12px;">✅ 運河開通後 — 穿越巴拿馬</div>
+            <div style="display:grid; grid-template-columns:150px 1fr; gap:14px; align-items:center;">
+              <svg viewBox="0 0 160 260" style="width:150px;height:230px;display:block;">
+                <rect x="8" y="8" width="50" height="36" rx="5" fill="#2d3a1e" opacity="0.9"/>
+                <text x="33" y="31" fill="#81c784" font-size="8" text-anchor="middle" font-family="sans-serif">美國</text>
+                <rect x="22" y="62" width="36" height="13" rx="4" fill="#4fc3f7" opacity="0.95"/>
+                <text x="40" y="72" fill="#0d1117" font-size="6.5" text-anchor="middle" font-family="sans-serif" font-weight="bold">巴拿馬運河</text>
+                <rect x="108" y="8" width="44" height="36" rx="5" fill="#1a2a3d" opacity="0.9"/>
+                <text x="130" y="31" fill="#4fc3f7" font-size="8" text-anchor="middle" font-family="sans-serif">亞洲</text>
+                <path d="M 33 44 Q 40 54 40 62 Q 40 75 58 75 Q 90 75 120 55 Q 135 42 130 44"
+                      fill="none" stroke="#4fc3f7" stroke-width="3" opacity="0.95"/>
+                <circle cx="33" cy="44" r="4" fill="#81c784"/>
+                <circle cx="130" cy="44" r="4" fill="#4fc3f7"/>
+                <text x="80" y="105" fill="#4fc3f7" font-size="7" text-anchor="middle" font-family="sans-serif">▲ 直達路線</text>
+                <text x="80" y="150" fill="#81c784" font-size="9" text-anchor="middle" font-family="sans-serif" font-weight="bold">節省 8,000 海里</text>
+                <text x="80" y="168" fill="#81c784" font-size="7.5" text-anchor="middle" font-family="sans-serif">省去 17 天航程</text>
+              </svg>
+              <div style="display:flex;flex-direction:column;gap:9px;">
+                <div style="background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.4);border-radius:9px;padding:10px;">
+                  <div style="font-size:0.36em;color:var(--accent2);font-weight:700;">航行距離</div>
+                  <div style="font-size:0.62em;font-weight:800;color:var(--success);">≈ 12,000 km</div>
+                  <div style="font-size:0.3em;color:#aaa;">直接穿越，節省 8,000 海里</div>
+                </div>
+                <div style="background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.4);border-radius:9px;padding:10px;">
+                  <div style="font-size:0.36em;color:var(--accent2);font-weight:700;">航行時間（美東→亞洲）</div>
+                  <div style="font-size:0.62em;font-weight:800;color:var(--success);">約 26 天</div>
+                </div>
+                <div style="background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.4);border-radius:9px;padding:10px;">
+                  <div style="font-size:0.36em;color:var(--accent2);font-weight:700;">過河費用</div>
+                  <div style="font-size:0.32em;color:#ccc;line-height:1.7;">💰 平均 15–20 萬美元<br>⛽ 大幅節省燃油成本<br>🚢 過閘僅需 8–10 小時</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分割線 -->
+        <div id="viz-divider"></div>
+
+        <!-- 浮動標籤 -->
+        <div id="lbl-before" style="position:absolute;top:10px;left:10px;font-size:0.28em;
+          color:var(--warn);font-weight:700;pointer-events:none;text-shadow:0 0 6px #000;">◀ 運河前</div>
+        <div id="lbl-after" style="position:absolute;top:10px;right:10px;font-size:0.28em;
+          color:var(--accent2);font-weight:700;pointer-events:none;text-shadow:0 0 6px #000;">運河後 ▶</div>
+      </div>
+
+      <input id="viz-slider" type="range" min="0" max="100" value="0" />
+      <p style="font-size:0.32em;color:#555;text-align:center;margin:5px 0 0;">← 拖動滑桿，比較運河開通前後的航行差異</p>
+    </section>
+
+    <!-- ⑥ 現代規模 -->
+    <section>
+      <h2>現代規模：關鍵數字</h2>
+      <div class="stat-row">
+        <div class="stat-card fragment">
+          <div class="num">14,000<span style="font-size:0.4em">艘</span></div>
+          <div class="label">年通過船隻數</div>
+        </div>
+        <div class="stat-card fragment">
+          <div class="num">6<span style="font-size:0.5em">%</span></div>
+          <div class="label">佔全球海上貿易</div>
+        </div>
+        <div class="stat-card fragment">
+          <div class="num">46<span style="font-size:0.4em">億</span></div>
+          <div class="label">年收費收入（美元）</div>
+        </div>
+        <div class="stat-card fragment">
+          <div class="num">170</div>
+          <div class="label">服務國家數</div>
+        </div>
+      </div>
+      <div class="adv-grid" style="margin-top:14px;">
+        <div class="adv-card fragment">
+          <div class="adv-icon"><img src="images/icon_port.png" alt="港口"></div>
+          <div class="adv-title">連結 1,920 個港口</div>
+          <div class="adv-desc">全球最重要的海上十字路口，服務 180 條主要國際航線，是東西方貿易的核心樞紐</div>
+        </div>
+        <div class="adv-card fragment">
+          <div class="adv-icon"><img src="images/icon_globe.png" alt="全球"></div>
+          <div class="adv-title">佔巴拿馬 GDP 20%</div>
+          <div class="adv-desc">直接創造 11,000 個工作機會，帶動金融、物流、貿易全面發展，是巴拿馬最重要的國家資產</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑦ 2016 擴建 -->
+    <section data-background-image="images/expansion.png"
+             data-background-opacity="0.22"
+             data-background-size="cover">
+      <h2>2016 擴建：新巴拿馬型船閘</h2>
+      <p style="font-size:0.4em;color:#aaa;margin:0.1em 0 0.6em;">耗資 52.5 億美元 · 歷時 10 年 · 2016 年 6 月 26 日啟用</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:18px;border-top:3px solid var(--accent);">
+          <div style="font-size:0.46em;font-weight:700;color:var(--accent);margin-bottom:10px;">🔧 工程亮點</div>
+          <ul style="font-size:0.37em;color:#ccc;list-style:none;padding:0;line-height:2.1;">
+            <li>✦ 大西洋端：阿瓜克拉拉船閘（Agua Clara）</li>
+            <li>✦ 太平洋端：科科利船閘（Cocoli）</li>
+            <li>✦ 採用滾動閘門取代傳統對開式</li>
+            <li>✦ 可容納長 366m、寬 51m 的超大型船</li>
+            <li>✦ 舊閘與新閘同時並行運作</li>
+          </ul>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:18px;border-top:3px solid var(--accent2);">
+          <div style="font-size:0.46em;font-weight:700;color:var(--accent2);margin-bottom:10px;">🌊 環境設計</div>
+          <ul style="font-size:0.37em;color:#ccc;list-style:none;padding:0;line-height:2.1;">
+            <li>✦ 三個節水側盆地，回收 60% 過閘用水</li>
+            <li>✦ 每次過閘節省約 6,000 萬公升淡水</li>
+            <li>✦ 採電力牽引取代柴油動力</li>
+            <li>✦ 減少海水鹽楔入侵加通湖</li>
+            <li>✦ 年通行量從 14,000 艘提升至 18,000 艘</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑧ 新舊船型比較 -->
+    <section>
+      <h2>新舊船型比較：Panamax vs Neopanamax</h2>
+      <div style="display:grid;grid-template-columns:1fr 70px 1fr;gap:0;align-items:start;margin-top:0.5em;">
+        <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;border-top:3px solid #777;">
+          <div style="text-align:center;margin-bottom:10px;">
+            <img src="images/icon_ship_old.png" alt="舊船" style="width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(150,150,150,0.5));">
+          </div>
+          <div style="font-size:0.46em;font-weight:700;color:#aaa;text-align:center;margin-bottom:10px;">原巴拿馬型 Panamax</div>
+          <ul style="font-size:0.37em;color:#ccc;list-style:none;padding:0;line-height:2.2;">
+            <li>📏 船長：最長 294 公尺</li>
+            <li>📐 船寬：最寬 32 公尺</li>
+            <li>📦 載箱：4,500–5,000 TEU</li>
+            <li>⚓ 吃水：約 12 公尺</li>
+          </ul>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;font-size:1.4em;font-weight:900;color:#444;padding-top:80px;">VS</div>
+        <div style="background:rgba(79,195,247,0.08);border-radius:12px;padding:16px;border-top:3px solid var(--accent2);">
+          <div style="text-align:center;margin-bottom:10px;">
+            <img src="images/icon_ship_new.png" alt="新船" style="width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(79,195,247,0.6));">
+          </div>
+          <div style="font-size:0.46em;font-weight:700;color:var(--accent2);text-align:center;margin-bottom:10px;">新巴拿馬型 Neopanamax</div>
+          <ul style="font-size:0.37em;color:#ccc;list-style:none;padding:0;line-height:2.2;">
+            <li>📏 船長：最長 <span style="color:var(--success);font-weight:700;">366 公尺</span></li>
+            <li>📐 船寬：最寬 <span style="color:var(--success);font-weight:700;">51 公尺</span>（+60%）</li>
+            <li>📦 載箱：<span style="color:var(--success);font-weight:700;">14,000 TEU</span>（近 3 倍）</li>
+            <li>⚓ 吃水：<span style="color:var(--success);font-weight:700;">15.2 公尺</span></li>
+          </ul>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:12px;font-size:0.38em;color:var(--accent);">
+        ▲ 單次過境貨運量提升近 3 倍，徹底改變全球供應鏈結構
+      </div>
+    </section>
+
+    <!-- ⑨ 全球經濟影響 -->
+    <section>
+      <h2>全球經濟影響</h2>
+      <div class="adv-grid">
+        <div class="adv-card fragment">
+          <div class="adv-icon"><img src="images/icon_usa.png" alt="美國"></div>
+          <div class="adv-title">美國最大使用者</div>
+          <div class="adv-desc">美國商品佔運河總流量 73%，40% 的美國貨櫃運輸都經過巴拿馬運河，是美國供應鏈命脈</div>
+        </div>
+        <div class="adv-card fragment">
+          <div class="adv-icon"><img src="images/icon_container.png" alt="貨櫃"></div>
+          <div class="adv-title">年貨物量 2,700 億美元</div>
+          <div class="adv-desc">全球每年逾 2,700 億美元貨物通過此航道，是全球貿易不可缺少的主要大動脈</div>
+        </div>
+        <div class="adv-card fragment">
+          <div class="adv-icon"><img src="images/icon_dollar.png" alt="收入"></div>
+          <div class="adv-title">帶動巴拿馬經濟</div>
+          <div class="adv-desc">佔巴拿馬 GDP 直接貢獻 3%，總計貢獻全國財政收入約 20%，直接雇用 11,000 人</div>
+        </div>
+        <div class="adv-card fragment">
+          <div class="adv-icon"><img src="images/icon_route.png" alt="航線"></div>
+          <div class="adv-title">180 條主要航線</div>
+          <div class="adv-desc">連結 170 個國家、1,920 個港口，是連接亞洲、美洲、歐洲供應鏈的核心轉運節點</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑩ 環境挑戰 -->
+    <section data-background-image="images/environment.png"
+             data-background-opacity="0.22"
+             data-background-size="cover">
+      <h2>環境挑戰與未來展望</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:0.5em;">
+        <div style="background:rgba(232,100,58,0.1);border:1px solid rgba(232,100,58,0.35);border-radius:12px;padding:16px;">
+          <div style="font-size:0.44em;font-weight:700;color:var(--accent);margin-bottom:8px;">🌵 當前危機</div>
+          <ul style="font-size:0.36em;color:#ccc;list-style:none;padding:0;line-height:2.1;">
+            <li>⚡ 2023–2024 聖嬰現象引發嚴重乾旱</li>
+            <li>📉 加通湖水位降至歷史低位</li>
+            <li>🚢 被迫削減日通航量 36%</li>
+            <li>⚖️ 實施船隻吃水深度限制</li>
+            <li>💸 全球供應鏈運費大幅上漲</li>
+          </ul>
+        </div>
+        <div style="background:rgba(79,195,247,0.07);border:1px solid rgba(79,195,247,0.22);border-radius:12px;padding:16px;">
+          <div style="font-size:0.44em;font-weight:700;color:var(--accent2);margin-bottom:8px;">🌱 未來計畫</div>
+          <ul style="font-size:0.36em;color:#ccc;list-style:none;padding:0;line-height:2.1;">
+            <li>🏗️ Rio Indo 大壩（預計 2027 年動工）</li>
+            <li>💧 新增加通湖補水水庫，預算 16 億美元</li>
+            <li>🤖 AI 智慧排班最佳化過境流量</li>
+            <li>♻️ 擴大節水側盆地使用</li>
+            <li>🌿 2030 年碳中和運河目標</li>
+          </ul>
+        </div>
+      </div>
+      <div style="background:rgba(255,183,77,0.1);border:1px solid rgba(255,183,77,0.3);border-radius:9px;padding:10px;margin-top:12px;">
+        <div style="font-size:0.36em;color:var(--warn);">⚠ 氣候變遷正威脅全球最重要的航道之一——乾旱導致的損失預計在 2050 年前持續加劇。</div>
+      </div>
+    </section>
+
+    <!-- ⑪ 投票 -->
+    <section id="slide-poll">
+      <h2>你認為巴拿馬運河最大的挑戰是什麼？</h2>
+      <div id="poll-options" style="display:flex; flex-direction:column; gap:10px; margin-top:0.7em;"></div>
+      <div style="font-size:0.36em; color:#555; text-align:center; margin-top:0.7em;">
+        已投票：<span id="poll-total" style="color:var(--accent);font-weight:700;">0</span> 人
+      </div>
+    </section>
+
+    <!-- ⑫ 封底 -->
+    <section data-background-image="images/ending.png"
+             data-background-opacity="0.38"
+             data-background-size="cover">
+      <div class="end-slide">
+        <div style="margin-bottom:0.4em;">
+          <img src="images/icon_globe.png" alt=""
+               style="width:130px;height:130px;object-fit:contain;
+                      filter:drop-shadow(0 0 24px rgba(79,195,247,0.7));">
+        </div>
+        <h1 style="color:var(--accent2);font-size:1.7em;">一條運河，串連全球命運</h1>
+        <p class="tagline">從 1914 年通航至今，巴拿馬運河仍是人類工程意志與全球化最有力的見證</p>
+        <p style="font-size:0.34em;color:#444;margin-top:1.8em;">
+          資料來源：巴拿馬運河管理局 · Wikipedia · Britannica · FreightAmigo · CNBC · Sinay.ai
+        </p>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'slide',
+    transitionSpeed: 'default',
+    backgroundTransition: 'fade',
+    center: true,
+    progress: true,
+    controls: true,
+    slideNumber: 'c/t',
+    plugins: []
+  });
+
+  // VIZ 滑桿
+  (function() {
+    const slider  = document.getElementById('viz-slider');
+    const after   = document.getElementById('viz-after');
+    const divider = document.getElementById('viz-divider');
+    const lblB    = document.getElementById('lbl-before');
+    const lblA    = document.getElementById('lbl-after');
+    if (!slider) return;
+
+    slider.addEventListener('input', function() {
+      const v = +this.value;
+      after.style.clipPath = `inset(0 ${100 - v}% 0 0)`;
+      divider.style.left = v + '%';
+      this.style.background = `linear-gradient(to right, var(--accent2) ${v}%, rgba(255,255,255,0.15) ${v}%)`;
+      if (lblB) lblB.style.opacity = v > 80 ? (100 - v) / 20 : 1;
+      if (lblA) lblA.style.opacity = v < 20 ? v / 20 : 1;
+    });
+  })();
+</script>
+
+<!-- Firebase 文字雲 -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
+  import {
+    getFirestore, collection, addDoc, onSnapshot,
+    serverTimestamp, query, orderBy
+  } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
+
+  const cfg = {
+    apiKey: "AIzaSyAYQhNavPSce17XtvDC5xnXyl9iUhW9KjA",
+    authDomain: "teacherstudy-109ef.firebaseapp.com",
+    projectId: "teacherstudy-109ef",
+    storageBucket: "teacherstudy-109ef.firebasestorage.app",
+    messagingSenderId: "196599230156",
+    appId: "1:196599230156:web:cfe55d364df3ae1b9d5c69"
+  };
+  const app = initializeApp(cfg, 'wc-app');
+  const fdb = getFirestore(app);
+  const wordsRef = collection(fdb, 'panama_canal_wordcloud');
+  const COLORS = ['#4fc3f7','#e8643a','#ffb74d','#81c784','#ce93d8','#80deea','#f48fb1'];
+  let wcData = [];
+
+  window.wcSubmit = async function() {
+    const inp = document.getElementById('wc-input');
+    const word = inp.value.trim();
+    if (!word) return;
+    const btn = document.getElementById('wc-btn');
+    btn.disabled = true;
+    try { await addDoc(wordsRef, { word, created_at: serverTimestamp() }); inp.value = ''; }
+    catch(e) { console.error(e); }
+    finally { btn.disabled = false; }
+  };
+
+  document.getElementById('wc-input')?.addEventListener('keypress', e => { if (e.key==='Enter') window.wcSubmit(); });
+  document.getElementById('wc-btn')?.addEventListener('click', window.wcSubmit);
+
+  onSnapshot(query(wordsRef, orderBy('created_at','asc')), snap => {
+    const words = [];
+    snap.forEach(d => words.push(d.data().word));
+    const counts = {};
+    words.forEach(w => counts[w] = (counts[w]||0)+1);
+    wcData = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    document.getElementById('wc-total').textContent = words.length;
+    document.getElementById('wc-unique').textContent = wcData.length;
+    const listEl = document.getElementById('wc-list');
+    listEl.innerHTML = wcData.slice(0,12).map(([w,c])=>
+      `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <span>${w}</span><span style="color:var(--accent);font-weight:700;">${c}</span></div>`
+    ).join('') || '<div style="color:#555;padding:6px 0;">尚無資料</div>';
+    const empty = document.getElementById('wc-empty');
+    if (empty) empty.style.display = wcData.length>0?'none':'';
+    drawWC();
+  });
+
+  function drawWC() {
+    const canvas = document.getElementById('wc-canvas');
+    if (!canvas || typeof WordCloud==='undefined') return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width<10||rect.height<10) return;
+    canvas.width = rect.width; canvas.height = rect.height;
+    if (wcData.length===0) return;
+    const max = wcData[0][1];
+    WordCloud(canvas, {
+      list: wcData.map(([w,c])=>[w,Math.max(18,Math.round((c/max)*72))]),
+      gridSize:6, weightFactor:1,
+      fontFamily:'"Microsoft JhengHei","Noto Sans TC",sans-serif',
+      color:()=>COLORS[Math.floor(Math.random()*COLORS.length)],
+      backgroundColor:'transparent', rotateRatio:0.3, shuffle:true
+    });
+  }
+  Reveal.on('slidechanged', e => { if (e.currentSlide?.id==='slide-wordcloud') setTimeout(drawWC,150); });
+</script>
+
+<!-- Firebase 投票 -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
+  import {
+    getFirestore, doc, setDoc, onSnapshot, serverTimestamp
+  } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
+
+  const cfg = {
+    apiKey: "AIzaSyAYQhNavPSce17XtvDC5xnXyl9iUhW9KjA",
+    authDomain: "teacherstudy-109ef.firebaseapp.com",
+    projectId: "teacherstudy-109ef",
+    storageBucket: "teacherstudy-109ef.firebasestorage.app",
+    messagingSenderId: "196599230156",
+    appId: "1:196599230156:web:cfe55d364df3ae1b9d5c69"
+  };
+  const app2 = initializeApp(cfg, 'poll-app');
+  const fdb2 = getFirestore(app2);
+  const OPTIONS = [
+    { id:'a', label:'🌵 氣候變遷與水資源短缺' },
+    { id:'b', label:'🌏 地緣政治與主權爭議' },
+    { id:'c', label:'🚢 替代航線的競爭（北極航線、尼加拉瓜運河）' },
+    { id:'d', label:'🏗️ 基礎設施老化與擴容需求' },
+  ];
+  const pollRef = doc(fdb2, 'panama_canal_poll', 'results');
+  const userId = 'u_' + Math.random().toString(36).slice(2,9);
+  let myVote = null;
+
+  const container = document.getElementById('poll-options');
+  OPTIONS.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.id = `poll-btn-${opt.id}`;
+    btn.className = 'poll-btn';
+    btn.innerHTML = `<div style="display:flex;align-items:center;gap:12px;">
+      <span style="flex:0 0 22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);
+                   display:flex;align-items:center;justify-content:center;font-size:11px;"
+            id="poll-check-${opt.id}"></span>
+      <span style="flex:1;text-align:left;">${opt.label}</span>
+      <span style="flex:0 0 110px;height:7px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;">
+        <div id="poll-bar-${opt.id}" style="height:100%;width:0;background:var(--accent2);border-radius:4px;transition:width 0.4s;"></div>
+      </span>
+      <span id="poll-pct-${opt.id}" style="flex:0 0 32px;text-align:right;font-size:0.75em;color:#777;">0%</span>
+    </div>`;
+    btn.onclick = () => vote(opt.id);
+    container.appendChild(btn);
+  });
+
+  async function vote(optId) {
+    myVote = optId;
+    const data = {};
+    data[`votes.${userId}`] = optId;
+    data.updated_at = serverTimestamp();
+    await setDoc(pollRef, data, { merge: true });
+  }
+
+  onSnapshot(pollRef, snap => {
+    const data = snap.data() || {};
+    const votes = data.votes || {};
+    const counts = {};
+    OPTIONS.forEach(o => counts[o.id]=0);
+    Object.values(votes).forEach(v => { if (counts[v]!==undefined) counts[v]++; });
+    const total = Object.values(counts).reduce((a,b)=>a+b,0);
+    document.getElementById('poll-total').textContent = total;
+    OPTIONS.forEach(opt => {
+      const pct = total>0 ? Math.round((counts[opt.id]/total)*100) : 0;
+      document.getElementById(`poll-bar-${opt.id}`).style.width = pct+'%';
+      document.getElementById(`poll-pct-${opt.id}`).textContent = pct+'%';
+      const chk = document.getElementById(`poll-check-${opt.id}`);
+      if (myVote===opt.id) { chk.textContent='✓'; chk.style.background='var(--accent2)'; chk.style.borderColor='var(--accent2)'; }
+    });
+  });
+</script>
+
+</body>
+</html>
