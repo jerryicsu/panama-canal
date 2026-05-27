@@ -686,49 +686,120 @@
   const userId = 'u_' + Math.random().toString(36).slice(2,9);
   let myVote = null;
 
-  const container = document.getElementById('poll-options');
-  OPTIONS.forEach(opt => {
-    const btn = document.createElement('button');
-    btn.id = `poll-btn-${opt.id}`;
-    btn.className = 'poll-btn';
-    btn.innerHTML = `<div style="display:flex;align-items:center;gap:12px;">
-      <span style="flex:0 0 22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);
-                   display:flex;align-items:center;justify-content:center;font-size:11px;"
-            id="poll-check-${opt.id}"></span>
-      <span style="flex:1;text-align:left;">${opt.label}</span>
-      <span style="flex:0 0 110px;height:7px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;">
-        <div id="poll-bar-${opt.id}" style="height:100%;width:0;background:var(--accent2);border-radius:4px;transition:width 0.4s;"></div>
-      </span>
-      <span id="poll-pct-${opt.id}" style="flex:0 0 32px;text-align:right;font-size:0.75em;color:#777;">0%</span>
-    </div>`;
-    btn.onclick = () => vote(opt.id);
-    container.appendChild(btn);
-  });
+  // --- 本地票數（Firebase 失敗時備援）---
+  const localCounts = {};
+  OPTIONS.forEach(o => localCounts[o.id] = 0);
+  let useLocal = false;
 
-  async function vote(optId) {
-    myVote = optId;
-    const data = {};
-    data[`votes.${userId}`] = optId;
-    data.updated_at = serverTimestamp();
-    await setDoc(pollRef, data, { merge: true });
+  // --- 渲染選項按鈕 ---
+  const container = document.getElementById('poll-options');
+  if (container) {
+    OPTIONS.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.id = `poll-btn-${opt.id}`;
+      btn.className = 'poll-btn';
+      btn.innerHTML = `<div style="display:flex;align-items:center;gap:12px;">
+        <span style="flex:0 0 22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);
+                     display:flex;align-items:center;justify-content:center;font-size:11px;transition:all 0.2s;"
+              id="poll-check-${opt.id}"></span>
+        <span style="flex:1;text-align:left;">${opt.label}</span>
+        <span style="flex:0 0 110px;height:7px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;">
+          <div id="poll-bar-${opt.id}" style="height:100%;width:0;background:var(--accent2);border-radius:4px;transition:width 0.4s;"></div>
+        </span>
+        <span id="poll-pct-${opt.id}" style="flex:0 0 32px;text-align:right;font-size:0.75em;color:#777;">0%</span>
+      </div>`;
+
+      btn.onclick = () => {
+        // ① 立即更新本地票數（樂觀更新）
+        if (myVote) localCounts[myVote] = Math.max(0, localCounts[myVote] - 1);
+        localCounts[opt.id]++;
+        myVote = opt.id;
+
+        // ② 立即更新勾選圖示
+        OPTIONS.forEach(o => {
+          const chk = document.getElementById(`poll-check-${o.id}`);
+          if (!chk) return;
+          if (o.id === opt.id) {
+            chk.textContent = '✓';
+            chk.style.background = 'var(--accent2)';
+            chk.style.borderColor = 'var(--accent2)';
+          } else {
+            chk.textContent = '';
+            chk.style.background = '';
+            chk.style.borderColor = 'rgba(255,255,255,0.3)';
+          }
+        });
+
+        // ③ 若 Firebase 不可用，立即更新本地畫面
+        if (useLocal) renderCounts(localCounts);
+
+        // ④ 嘗試寫入 Firebase
+        vote(opt.id);
+      };
+
+      container.appendChild(btn);
+    });
   }
 
-  onSnapshot(pollRef, snap => {
-    const data = snap.data() || {};
-    const votes = data.votes || {};
-    const counts = {};
-    OPTIONS.forEach(o => counts[o.id]=0);
-    Object.values(votes).forEach(v => { if (counts[v]!==undefined) counts[v]++; });
-    const total = Object.values(counts).reduce((a,b)=>a+b,0);
-    document.getElementById('poll-total').textContent = total;
+  // --- 寫入 Firebase（含錯誤處理）---
+  async function vote(optId) {
+    try {
+      const data = { updated_at: serverTimestamp() };
+      data[`votes.${userId}`] = optId;
+      await setDoc(pollRef, data, { merge: true });
+    } catch(e) {
+      console.warn('[Poll] Firebase write failed, using local mode:', e.message);
+      useLocal = true;
+      renderCounts(localCounts);
+    }
+  }
+
+  // --- 渲染票數畫面 ---
+  function renderCounts(counts) {
+    const total = Object.values(counts).reduce((a,b)=>a+b, 0);
+    const totalEl = document.getElementById('poll-total');
+    if (totalEl) totalEl.textContent = total;
     OPTIONS.forEach(opt => {
-      const pct = total>0 ? Math.round((counts[opt.id]/total)*100) : 0;
-      document.getElementById(`poll-bar-${opt.id}`).style.width = pct+'%';
-      document.getElementById(`poll-pct-${opt.id}`).textContent = pct+'%';
-      const chk = document.getElementById(`poll-check-${opt.id}`);
-      if (myVote===opt.id) { chk.textContent='✓'; chk.style.background='var(--accent2)'; chk.style.borderColor='var(--accent2)'; }
+      const pct = total > 0 ? Math.round((counts[opt.id] / total) * 100) : 0;
+      const bar = document.getElementById(`poll-bar-${opt.id}`);
+      const pctEl = document.getElementById(`poll-pct-${opt.id}`);
+      if (bar) bar.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = pct + '%';
     });
-  });
+  }
+
+  // --- 監聽 Firebase 即時更新（含錯誤處理）---
+  onSnapshot(
+    pollRef,
+    snap => {
+      useLocal = false;
+      const data = snap.data() || {};
+      const votes = data.votes || {};
+      const counts = {};
+      OPTIONS.forEach(o => counts[o.id] = 0);
+      Object.values(votes).forEach(v => { if (counts[v] !== undefined) counts[v]++; });
+
+      // 同步本地計數
+      OPTIONS.forEach(o => localCounts[o.id] = counts[o.id]);
+
+      renderCounts(counts);
+
+      // 恢復勾選狀態
+      if (myVote) {
+        const chk = document.getElementById(`poll-check-${myVote}`);
+        if (chk) {
+          chk.textContent = '✓';
+          chk.style.background = 'var(--accent2)';
+          chk.style.borderColor = 'var(--accent2)';
+        }
+      }
+    },
+    err => {
+      console.warn('[Poll] Firebase read failed, using local mode:', err.message);
+      useLocal = true;
+      renderCounts(localCounts);
+    }
+  );
 </script>
 
 </body>
