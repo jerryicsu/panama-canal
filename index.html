@@ -730,8 +730,8 @@
           }
         });
 
-        // ③ 若 Firebase 不可用，立即更新本地畫面
-        if (useLocal) renderCounts(localCounts);
+        // ③ 立即更新本地畫面（Firebase onSnapshot 到達時會再覆蓋同步）
+        renderCounts(localCounts);
 
         // ④ 嘗試寫入 Firebase
         vote(opt.id);
