@@ -676,164 +676,122 @@
   };
   const app2 = initializeApp(cfg, 'poll-app');
   const fdb2 = getFirestore(app2);
+
   const OPTIONS = [
     { id:'a', label:'🌵 氣候變遷與水資源短缺' },
     { id:'b', label:'🌏 地緣政治與主權爭議' },
     { id:'c', label:'🚢 替代航線的競爭（北極航線、尼加拉瓜運河）' },
     { id:'d', label:'🏗️ 基礎設施老化與擴容需求' },
   ];
-  const pollRef = doc(fdb2, 'panama_canal_poll', 'results');
-  const userId = 'u_' + Math.random().toString(36).slice(2,9);
-  let myVote = null;
 
-  // --- 本地票數（Firebase 失敗時備援）---
-  const localCounts = {};
-  OPTIONS.forEach(o => localCounts[o.id] = 0);
-  let useLocal = false;
+  const pollRef  = doc(fdb2, 'panama_canal_poll', 'results');
+  const userId   = 'u_' + Math.random().toString(36).slice(2, 9);
+  let myVote     = null;
+  let counts     = { a:0, b:0, c:0, d:0 };
 
-  // --- 儲存元素直接參考（避免 getElementById 範圍問題）---
-  const elRefs = {}; // { a: { check, bar, pct }, ... }
-  const totalEl = document.getElementById('poll-total');
+  // ─── 完整重建 poll 畫面 ───────────────────────────────────────────
+  function renderPoll() {
+    const wrap = document.getElementById('poll-options');
+    const totalEl = document.getElementById('poll-total');
+    if (!wrap) return;
 
-  // --- 渲染選項按鈕（用 createElement，避免 innerHTML 解析異常）---
-  const container = document.getElementById('poll-options');
-  if (container) {
+    const total = Object.values(counts).reduce((s, n) => s + n, 0);
+    if (totalEl) totalEl.textContent = total;
+
+    // 清空後整體重建，100% 避免 DOM 殘留問題
+    wrap.innerHTML = '';
+
     OPTIONS.forEach(opt => {
+      const selected = myVote === opt.id;
+      const pct = total > 0 ? Math.round((counts[opt.id] / total) * 100) : 0;
+
+      // ── 外層按鈕 ──
       const btn = document.createElement('button');
-      btn.className = 'poll-btn';
+      btn.style.cssText = [
+        'display:block', 'width:100%', 'padding:12px 16px',
+        'background:' + (selected ? 'rgba(79,195,247,0.14)' : 'rgba(255,255,255,0.06)'),
+        'border:1px solid ' + (selected ? 'rgba(79,195,247,0.5)' : 'rgba(255,255,255,0.12)'),
+        'border-radius:10px', 'color:#fff', 'cursor:pointer',
+        'font-family:inherit', 'font-size:0.46em', 'text-align:left',
+        'transition:background 0.2s',
+      ].join(';');
 
-      // 勾選圓圈
-      const checkEl = document.createElement('span');
-      Object.assign(checkEl.style, {
-        flex: '0 0 22px', height: '22px', borderRadius: '50%',
-        border: '2px solid rgba(255,255,255,0.3)',
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '11px', transition: 'all 0.2s', marginRight: '12px'
-      });
+      // ── 第一行：勾 + 文字 + 百分比數字 ──
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;';
 
-      // 選項文字
-      const labelEl = document.createElement('span');
-      labelEl.textContent = opt.label;
-      labelEl.style.flex = '1';
+      const chk = document.createElement('span');
+      chk.textContent = selected ? '✓' : '○';
+      chk.style.cssText = [
+        'display:inline-flex', 'align-items:center', 'justify-content:center',
+        'width:20px', 'height:20px', 'border-radius:50%', 'font-size:11px',
+        'flex-shrink:0', 'font-weight:700',
+        'color:' + (selected ? '#0d1117' : 'rgba(255,255,255,0.3)'),
+        'background:' + (selected ? 'var(--accent2)' : 'transparent'),
+        'border:2px solid ' + (selected ? 'var(--accent2)' : 'rgba(255,255,255,0.25)'),
+      ].join(';');
 
-      // 進度條外框
-      const barWrap = document.createElement('span');
-      Object.assign(barWrap.style, {
-        display: 'inline-block', width: '110px', height: '7px',
-        background: 'rgba(255,255,255,0.1)', borderRadius: '4px',
-        overflow: 'hidden', margin: '0 10px'
-      });
+      const lbl = document.createElement('span');
+      lbl.textContent = opt.label;
+      lbl.style.cssText = 'flex:1;';
 
-      // 進度條填充
-      const barFill = document.createElement('span');
-      Object.assign(barFill.style, {
-        display: 'block', height: '100%', width: '0%',
-        background: 'var(--accent2)', borderRadius: '4px',
-        transition: 'width 0.4s'
-      });
-      barWrap.appendChild(barFill);
+      const pctTxt = document.createElement('span');
+      pctTxt.textContent = pct + '%';
+      pctTxt.style.cssText = 'color:#888;font-size:0.9em;flex-shrink:0;min-width:32px;text-align:right;';
 
-      // 百分比文字
-      const pctEl = document.createElement('span');
-      pctEl.textContent = '0%';
-      Object.assign(pctEl.style, {
-        width: '32px', textAlign: 'right', fontSize: '0.75em', color: '#777'
-      });
+      row.appendChild(chk);
+      row.appendChild(lbl);
+      row.appendChild(pctTxt);
 
-      btn.appendChild(checkEl);
-      btn.appendChild(labelEl);
-      btn.appendChild(barWrap);
-      btn.appendChild(pctEl);
-      container.appendChild(btn);
+      // ── 第二行：進度條 ──
+      const barBg = document.createElement('div');
+      barBg.style.cssText = 'height:5px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:7px;overflow:hidden;';
 
-      // 儲存直接參考
-      elRefs[opt.id] = { check: checkEl, bar: barFill, pct: pctEl };
+      const barFg = document.createElement('div');
+      barFg.style.cssText = 'height:100%;border-radius:4px;background:var(--accent2);width:' + pct + '%;';
 
-      btn.onclick = () => {
-        // ① 立即更新本地票數（樂觀更新）
-        if (myVote) localCounts[myVote] = Math.max(0, localCounts[myVote] - 1);
-        localCounts[opt.id]++;
+      barBg.appendChild(barFg);
+      btn.appendChild(row);
+      btn.appendChild(barBg);
+
+      // ── 點擊事件 ──
+      btn.addEventListener('click', () => {
+        if (myVote) counts[myVote] = Math.max(0, counts[myVote] - 1);
+        counts[opt.id]++;
         myVote = opt.id;
+        renderPoll();          // 立即重建畫面
+        saveVote(opt.id);      // 背景寫入 Firebase
+      });
 
-        // ② 立即更新所有勾選圖示（用直接參考）
-        OPTIONS.forEach(o => {
-          const el = elRefs[o.id];
-          if (!el) return;
-          if (o.id === opt.id) {
-            el.check.textContent = '✓';
-            el.check.style.background = 'var(--accent2)';
-            el.check.style.borderColor = 'var(--accent2)';
-          } else {
-            el.check.textContent = '';
-            el.check.style.background = '';
-            el.check.style.borderColor = 'rgba(255,255,255,0.3)';
-          }
-        });
-
-        // ③ 立即更新百分比畫面
-        renderCounts(localCounts);
-
-        // ④ 嘗試寫入 Firebase
-        vote(opt.id);
-      };
+      wrap.appendChild(btn);
     });
   }
 
-  // --- 寫入 Firebase（含錯誤處理）---
-  async function vote(optId) {
+  // ─── 寫入 Firebase ────────────────────────────────────────────────
+  async function saveVote(optId) {
     try {
       const data = { updated_at: serverTimestamp() };
-      data[`votes.${userId}`] = optId;
+      data['votes.' + userId] = optId;
       await setDoc(pollRef, data, { merge: true });
-    } catch(e) {
-      console.warn('[Poll] Firebase write failed, using local mode:', e.message);
-      useLocal = true;
-      renderCounts(localCounts);
+    } catch (e) {
+      console.warn('[Poll] write failed:', e.message);
     }
   }
 
-  // --- 渲染票數畫面（用直接參考）---
-  function renderCounts(counts) {
-    const total = Object.values(counts).reduce((a,b)=>a+b, 0);
-    if (totalEl) totalEl.textContent = total;
-    OPTIONS.forEach(opt => {
-      const pct = total > 0 ? Math.round((counts[opt.id] / total) * 100) : 0;
-      const el = elRefs[opt.id];
-      if (!el) return;
-      el.bar.style.width = pct + '%';
-      el.pct.textContent = pct + '%';
-    });
-  }
-
-  // --- 監聽 Firebase 即時更新（含錯誤處理）---
-  onSnapshot(
-    pollRef,
+  // ─── 即時監聽 Firebase ────────────────────────────────────────────
+  onSnapshot(pollRef,
     snap => {
-      useLocal = false;
-      const data = snap.data() || {};
-      const votes = data.votes || {};
-      const counts = {};
-      OPTIONS.forEach(o => counts[o.id] = 0);
-      Object.values(votes).forEach(v => { if (counts[v] !== undefined) counts[v]++; });
-
-      // 同步本地計數
-      OPTIONS.forEach(o => localCounts[o.id] = counts[o.id]);
-
-      renderCounts(counts);
-
-      // 恢復勾選狀態（用直接參考）
-      if (myVote && elRefs[myVote]) {
-        elRefs[myVote].check.textContent = '✓';
-        elRefs[myVote].check.style.background = 'var(--accent2)';
-        elRefs[myVote].check.style.borderColor = 'var(--accent2)';
-      }
+      const votes = (snap.data() || {}).votes || {};
+      const fresh = { a:0, b:0, c:0, d:0 };
+      Object.values(votes).forEach(v => { if (v in fresh) fresh[v]++; });
+      counts = fresh;
+      renderPoll();
     },
-    err => {
-      console.warn('[Poll] Firebase read failed, using local mode:', err.message);
-      useLocal = true;
-      renderCounts(localCounts);
-    }
+    err => { console.warn('[Poll] read failed:', err.message); }
   );
+
+  // ─── 初始渲染 ─────────────────────────────────────────────────────
+  renderPoll();
 </script>
 
 </body>
